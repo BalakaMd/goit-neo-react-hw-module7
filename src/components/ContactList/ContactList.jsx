@@ -1,31 +1,39 @@
 import { useSelector, useDispatch } from 'react-redux';
-import Contact from '../Contact/Contact';
-import { deleteContact } from '../../redux/contactsSlice';
+import { deleteContact } from '../../redux/contactsOps';
+import { selectFilteredContacts } from '../../redux/contactsSlice';
+import styles from './ContactList.module.css';
 
 const ContactList = () => {
   const dispatch = useDispatch();
-  const contacts = useSelector(state => state.contacts.items);
-  const filter = useSelector(state => state.filters.name);
+  const filteredContacts = useSelector(selectFilteredContacts);
 
-  const handleDeleteContact = contactId => {
-    dispatch(deleteContact(contactId));
+  const handleDeleteContact = async contactId => {
+    try {
+      await dispatch(deleteContact(contactId)).unwrap();
+    } catch (error) {
+      console.error('Failed to delete contact:', error);
+    }
   };
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(filter.toLowerCase())
-  );
+  if (filteredContacts.length === 0) {
+    return <p className={styles.noContacts}>No contacts found</p>;
+  }
 
   return (
-    <>
+    <ul className={styles.list}>
       {filteredContacts.map(contact => (
-        <Contact
-          key={contact.id}
-          name={contact.name}
-          phone={contact.number}
-          onDelete={() => handleDeleteContact(contact.id)}
-        />
+        <li key={contact.id} className={styles.item}>
+          <span className={styles.name}>{contact.name}</span>
+          <span className={styles.phone}>{contact.number}</span>
+          <button
+            className={styles.deleteButton}
+            onClick={() => handleDeleteContact(contact.id)}
+          >
+            Delete
+          </button>
+        </li>
       ))}
-    </>
+    </ul>
   );
 };
 
